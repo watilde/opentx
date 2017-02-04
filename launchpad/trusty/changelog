@@ -1,3 +1,9 @@
+opentx-companion22 (2.2.0~N362~trusty) trusty; urgency=low
+
+  * New release 2.2.0~N362 RC10
+
+ -- projectkk2glider <projectkk2glider@gmail.com>  Sun, 29 Jan 2017 10:51:59 +0100
+
 opentx-companion22 (2.2.0~N361.2~trusty) trusty; urgency=low
 
   * Added Taranis X7 simulator

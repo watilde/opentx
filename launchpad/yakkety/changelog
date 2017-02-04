@@ -1,3 +1,15 @@
+opentx-companion22 (2.2.0~N362.1~yakkety) yakkety; urgency=low
+
+  * Debian package fixes
+
+ -- projectkk2glider <projectkk2glider@gmail.com>  Sun, 29 Jan 2017 11:26:44 +0100
+
+opentx-companion22 (2.2.0~N362~yakkety) yakkety; urgency=low
+
+  * New release 2.2.0~N362 RC10
+
+ -- projectkk2glider <projectkk2glider@gmail.com>  Sun, 29 Jan 2017 10:52:04 +0100
+
 opentx-companion22 (2.2.0~N361.2~yakkety) yakkety; urgency=low
 
   * Added Taranis X7 simulator
