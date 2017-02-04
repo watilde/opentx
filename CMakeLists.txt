@@ -38,6 +38,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 # options shared by all targets
+option(GIT_TIMESTAMP "Use git revision timestamp" ON)
 option(VERBOSE_CMAKELISTS "Show extra information while processing CMakeLists.txt files." OFF)
 option(WARNINGS_AS_ERRORS "Treat any compiler warning as an error (adds -Werror flag)." OFF)
 if(WIN32)
@@ -106,7 +107,11 @@ endif()
 include(Macros)
 today(DATE)
 now(TIME)
-git_id(GIT_STR)
+if(GIT_TIMESTAMP)
+  git_id(GIT_STR)
+else()
+  set(GIT_STR 0)
+endif()
 
 add_subdirectory(${RADIO_SRC_DIRECTORY})
 
