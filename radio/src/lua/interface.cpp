@@ -64,19 +64,25 @@ int custom_lua_atpanic(lua_State * L)
 
 void luaHook(lua_State * L, lua_Debug *ar)
 {
-  instructionsPercent++;
-  if (instructionsPercent > 100) {
-    // From now on, as soon as a line is executed, error
-    // keep erroring until you're script reaches the top
-    lua_sethook(L, luaHook, LUA_MASKLINE, 0);
-    luaL_error(L, "CPU limit");
+  if (ar->event == LUA_HOOKCOUNT) {
+    instructionsPercent++;
+    if (instructionsPercent > 100) {
+      // From now on, as soon as a line is executed, error
+      // keep erroring until you're script reaches the top
+      // lua_sethook(L, luaHook, LUA_MASKLINE, 0);
+      luaL_error(L, "CPU limit");
+    }
+  }
+  else if (ar->event == LUA_HOOKLINE) {
+    lua_getinfo(L, "nSl", ar);
+    TRACE("Lua hook line: %s at %s:%d", ar->name, ar->source, ar->currentline);
   }
 }
 
 void luaSetInstructionsLimit(lua_State * L, int count)
 {
   instructionsPercent=0;
-  lua_sethook(L, luaHook, LUA_MASKCOUNT, count);
+  lua_sethook(L, luaHook, LUA_MASKCOUNT|LUA_MASKLINE, count);
 }
 
 int luaGetInputs(lua_State * L, ScriptInputsOutputs & sid)
