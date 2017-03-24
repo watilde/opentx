@@ -512,6 +512,8 @@ void luaLoadFiles(const char * directory, void (*callback)())
   f_closedir(&dir);
 }
 
+LuaMemTracer lsWidgetsTrace;
+
 void luaInitThemesAndWidgets()
 {
   TRACE("luaInitThemesAndWidgets");
@@ -519,11 +521,15 @@ void luaInitThemesAndWidgets()
 #if defined(USE_BIN_ALLOCATOR)
   lsWidgets = lua_newstate(bin_l_alloc, NULL);   //we use our own allocator!
 #else
-  lsWidgets = lua_newstate(l_alloc, NULL);   //we use Lua default allocator
+  memset(&lsWidgetsTrace, 0 , sizeof(lsWidgetsTrace));
+  lsWidgetsTrace.script = "lua_newstate(widgets)";
+  lsWidgets = lua_newstate(tracer_alloc, &lsWidgetsTrace);   //we use Lua default allocator
 #endif
   if (lsWidgets) {
     // install our panic handler
     lua_atpanic(lsWidgets, &custom_lua_atpanic);
+
+    lua_sethook(lsWidgets, luaHook, LUA_MASKLINE, 0);
 
     // protect libs and constants registration
     PROTECT_LUA() {

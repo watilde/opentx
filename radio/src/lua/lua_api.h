@@ -173,4 +173,17 @@ int luaLoadScriptFileToState(lua_State * L, const char * filename, const char * 
 #define LUA_LOAD_MODEL_SCRIPTS()
 #endif // defined(LUA)
 
+struct LuaMemTracer {
+  const char * script;
+  int lineno;
+  uint32_t alloc;
+  uint32_t free;
+};
+
+extern LuaMemTracer lsWidgetsTrace;
+
+void * tracer_alloc (void *ud, void *ptr, size_t osize, size_t nsize);
+void luaHook(lua_State * L, lua_Debug *ar);
+
+
 #endif // _LUA_API_H_

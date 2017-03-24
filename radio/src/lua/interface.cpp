@@ -51,6 +51,29 @@ struct our_longjmp * global_lj = 0;
 uint32_t luaExtraMemoryUsage = 0;
 #endif
 
+LuaMemTracer lsScriptsTrace;
+
+void *tracer_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
+
+  LuaMemTracer * tracer = (LuaMemTracer *)ud;
+  if (ptr) {
+    if (osize < nsize) {
+      // TRACE("Lua alloc %u", nsize - osize);
+      tracer->alloc += nsize - osize;
+    }
+    else {
+      // TRACE("Lua free %u", osize - nsize);
+      tracer->free += osize - nsize;
+    }
+  }
+  else {
+    // TRACE("Lua alloc %u (type %s)", nsize, osize < LUA_TOTALTAGS ? lua_typename(0, osize) : "unk");
+    tracer->alloc += nsize;
+  }
+  return l_alloc(ud, ptr, osize, nsize);
+}
+
+
 /* custom panic handler */
 int custom_lua_atpanic(lua_State * L)
 {
@@ -75,7 +98,15 @@ void luaHook(lua_State * L, lua_Debug *ar)
   }
   else if (ar->event == LUA_HOOKLINE) {
     lua_getinfo(L, "nSl", ar);
-    TRACE("Lua hook line: %s at %s:%d", ar->name, ar->source, ar->currentline);
+    LuaMemTracer * tracer = (L == lsScripts) ? &lsScriptsTrace : &lsWidgetsTrace;
+    if (tracer->alloc || tracer->free) {
+      TRACE("LT: [+%u,-%u] %s:%d", tracer->alloc, tracer->free, tracer->script, tracer->lineno);  
+    }
+    tracer->script = ar->source;
+    tracer->lineno = ar->currentline;
+    tracer->alloc = 0;
+    tracer->free = 0;
+    // TRACE("Lua hook line: %s at %s:%d", ar->name, ar->source, ar->currentline);
   }
 }
 
@@ -180,6 +211,12 @@ void luaClose(lua_State ** L)
     PROTECT_LUA() {
       TRACE("luaClose %p", *L);
       lua_close(*L);  // this should not panic, but we make sure anyway
+      LuaMemTracer * tracer = (*L == lsScripts) ? &lsScriptsTrace : &lsWidgetsTrace;
+      if (tracer->alloc || tracer->free) {
+        TRACE("LT: [+%u,-%u] luaClose(%s)", tracer->alloc, tracer->free, (*L == lsScripts) ? "scipts" : "widgets");  
+      }
+      tracer->alloc = 0;
+      tracer->free = 0;
     }
     else {
       // we can only disable Lua for the rest of the session
@@ -1009,11 +1046,15 @@ void luaInit()
 #if defined(USE_BIN_ALLOCATOR)
     lsScripts = lua_newstate(bin_l_alloc, NULL);   //we use our own allocator!
 #else
-    lsScripts = lua_newstate(l_alloc, NULL);   //we use Lua default allocator
+    memset(&lsScriptsTrace, 0 , sizeof(lsScriptsTrace));
+    lsScriptsTrace.script = "lua_newstate(scripts)";
+    lsScripts = lua_newstate(tracer_alloc, &lsScriptsTrace);   //we use Lua default allocator
 #endif
     if (lsScripts) {
       // install our panic handler
       lua_atpanic(lsScripts, &custom_lua_atpanic);
+
+      lua_sethook(lsScripts, luaHook, LUA_MASKLINE, 0);
 
       // protect libs and constants registration
       PROTECT_LUA() {

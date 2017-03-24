@@ -959,23 +959,12 @@ void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
   if (nsize == 0) {
     if (ptr) {   // avoid a bunch of NULL pointer free calls
       // TRACE_LUA_INTERNALS("free %p", ptr); FLUSH();
-      TRACE("Lua free %u at %p", osize, ptr);
       free(ptr);
     }
     return NULL;
   }
-  else {
-    // if (osize) {
-      if (osize < nsize)
-        TRACE("Lua alloc %u", nsize - osize);
-      else
-        TRACE("Lua free %u", osize - nsize);
-//     }
-// +   else
-// +      fprintf(stderr, "lua alloc %u\n", nsize);
-
+  else
     return realloc(ptr, nsize);
-  }
 }
 
 
